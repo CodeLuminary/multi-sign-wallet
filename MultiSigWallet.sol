@@ -3,21 +3,21 @@
 pragma solidity >=0.5.1 <0.9.0;
 
 contract MultiSigWallet {
-    event Deposit(address indexed sender, uint amount, uint balance);
+    event Deposit(address indexed sender, uint amount, uint balance); //Event to fire if there is a deposit to the smart contract
     event SubmitTransaction(
         address indexed owner,
         uint indexed txIndex,
         address indexed to,
         uint value,
         bytes data
-    );
-    event ConfirmTransaction(address indexed owner, uint indexed txIndex);
-    event RevokeConfirmation(address indexed owner, uint indexed txIndex);
-    event ExecuteTransaction(address indexed owner, uint indexed txIndex);
+    ); //Event to fire when a transaction is submitted to the smart contract
+    event ConfirmTransaction(address indexed owner, uint indexed txIndex); //Event to fire when an owner confirms a transaction
+    event RevokeConfirmation(address indexed owner, uint indexed txIndex); //Event to fire when an owner revokes a transaction
+    event ExecuteTransaction(address indexed owner, uint indexed txIndex); //Event to be fired when a transaction is executed
 
-    address[] public owners;
+    address[] public owners; //address array to hold owners address
     mapping(address => bool) public isOwner;
-    uint public numConfirmationsRequired;
+    uint public numConfirmationsRequired; //Numbers of confirmation required
 
     struct Transaction {
         address to;
@@ -32,6 +32,7 @@ contract MultiSigWallet {
 
     Transaction[] public transactions;
 
+    /* Set modifiers to be reused with functions */
     modifier onlyOwner() {
         require(isOwner[msg.sender], "not owner");
         _;
@@ -51,6 +52,7 @@ contract MultiSigWallet {
         require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
         _;
     }
+    //End of modifiers
 
     constructor(address[] memory _owners, uint _numConfirmationsRequired) {
         require(_owners.length > 0, "owners required");
@@ -63,10 +65,10 @@ contract MultiSigWallet {
         for (uint i = 0; i < _owners.length; i++) {
             address owner = _owners[i];
 
-            require(owner != address(0), "invalid owner");
+            require(owner != address(0), "invalid owner"); //Owners address must not be equal to contract address
             require(!isOwner[owner], "owner not unique");
 
-            isOwner[owner] = true;
+            isOwner[owner] = true; //Set address to be owner
             owners.push(owner);
         }
 
@@ -77,6 +79,7 @@ contract MultiSigWallet {
         emit Deposit(msg.sender, msg.value, address(this).balance);
     }
 
+    //Handles submission of a transaction
     function submitTransaction(
         address _to,
         uint _value,
@@ -97,6 +100,7 @@ contract MultiSigWallet {
         emit SubmitTransaction(msg.sender, txIndex, _to, _value, _data);
     }
 
+    //Confirm a transaction in the smart contract
     function confirmTransaction(uint _txIndex)
         public
         onlyOwner
@@ -111,6 +115,7 @@ contract MultiSigWallet {
         emit ConfirmTransaction(msg.sender, _txIndex);
     }
 
+    //Execute a transaction in the smart contract
     function executeTransaction(uint _txIndex)
         public
         onlyOwner
@@ -134,6 +139,7 @@ contract MultiSigWallet {
         emit ExecuteTransaction(msg.sender, _txIndex);
     }
 
+    //Revoke confirmation of a transaction in the smart contract
     function revokeConfirmation(uint _txIndex)
         public
         onlyOwner
@@ -150,14 +156,17 @@ contract MultiSigWallet {
         emit RevokeConfirmation(msg.sender, _txIndex);
     }
 
+    //Get owners of the contract
     function getOwners() public view returns (address[] memory) {
         return owners;
     }
 
+    //Get total transactions
     function getTransactionCount() public view returns (uint) {
         return transactions.length;
     }
 
+    //Get a particular transaction
     function getTransaction(uint _txIndex)
         public
         view
